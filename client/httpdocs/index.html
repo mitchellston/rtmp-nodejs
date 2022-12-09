@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script src="./hls/hls.min.js"></script>
+    <script src="https://cdn.bootcss.com/flv.js/1.5.0/flv.min.js"></script>
+  </head>
+  <body>
+    <p>STREAM ID:</p>
+    <input type="text" id="stream" />
+    <video id="videoElement" controls></video>
+    <button id="BUTTON">PLAY LIVESTREAM</button>
+    <script>
+      const serverAdres = "145.118.6.10";
+      document.getElementById("BUTTON").addEventListener("click", function () {
+        const stream = document.getElementById("stream").value;
+        const videoElement = document.getElementById("videoElement");
+
+        if (flvjs.isSupported() == true) {
+          console.log("flv is supported");
+          let flvPlayer = flvjs.createPlayer({
+            type: "flv",
+            url: "http://" + serverAdres + ":8000/live/" + stream + ".flv",
+          });
+          flvPlayer.attachMediaElement(videoElement);
+          flvPlayer.load();
+          flvPlayer.play();
+          return;
+        }
+
+        if (Hls.isSupported() == true) {
+          console.log("hls is supported");
+          let hls = new Hls();
+          hls.loadSource(
+            "http://" + serverAdres + ":8000/live/" + stream + "/index.m3u8"
+          );
+          console.log("test");
+          hls.attachMedia(videoElement);
+          hls.on(Hls.Events.MANIFEST_PARSED, function () {
+            videoElement.play();
+          });
+          return;
+        }
+        // hls.js is not supported on platforms that do not have Media Source Extensions (MSE) enabled.
+        // When the browser has built-in HLS support (check using `canPlayType`), we can provide an HLS manifest (i.e. .m3u8 URL) directly to the video element throught the `src` property.
+        // This is using the built-in support of the plain video element, without using hls.js.
+        if (videoElement.canPlayType("application/vnd.apple.mpegurl")) {
+          console.log("hls is supported");
+          videoElement.src =
+            "http://" + serverAdres + ":8000/live/" + stream + "/index.m3u8";
+          videoElement.play();
+          return;
+        }
+      });
+    </script>
+  </body>
+</html>
